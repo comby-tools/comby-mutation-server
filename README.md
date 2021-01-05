@@ -9,6 +9,7 @@ npm install express body-parser
 Start the server:
 
 ```
+export NODE_OPTIONS="--max-old-space-size=8192"
 node server.js
 ```
 
