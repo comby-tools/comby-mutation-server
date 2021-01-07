@@ -95,7 +95,6 @@ function transformSource(source) {
       var unparsed = match(source, mutation.match, ".go", "where true");
     } catch (err) {
       // Suppress bizarre Invalid_argument issue.
-      res.send("");
       if (DEBUG) {
         console.log("bizarre error: ", err);
       }
