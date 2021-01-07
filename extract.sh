@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ROOT=$(pwd)
-COMBY=~/official-comby/comby
+COMBY=~/official-comby/comby # FIXME
 
 # global names
 SOURCES=$ROOT/sources
@@ -43,7 +43,7 @@ for s in `ls ${SOURCES}/*${EXTENSION}`; do
 
     for e in $EXTRACTORS; do
         echo -n " " $(basename $e) " "
-        # write matches to ./extracted, with UUIDs. FIXME make dir configurable.
+        # write matches to $EXTRACTED_FOR_FILE
         $COMBY -sequential -config $e -d $SOURCES -f $s -matcher $LANG -json-lines -match-only \
             | python $PYTHON_EXTRACTOR $EXTRACTED_FOR_FILE $EXTENSION
     done
