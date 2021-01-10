@@ -6,7 +6,7 @@ const TOML = require("@iarna/toml");
 
 const { match, rewrite, substitute } = require("./js/comby.js");
 
-var DEBUG = true;
+var DEBUG = false;
 
 /** Generation parameters */
 var TEMPLATES_DIR = "./templates";
