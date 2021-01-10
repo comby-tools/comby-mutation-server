@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ROOT=$(pwd)
-COMBY=~/official-comby/comby # FIXME
+COMBY=comby
 
 # global names
 SOURCES=$ROOT/sources
@@ -16,7 +16,7 @@ FRAGMENTS_FOR_FILE=$ROOT/fragments_for_file
 # patterns for extraction
 EXTRACT_PATTERNS_DIR=$ROOT/extract_patterns
 
-EXTENSION=".sol"
+EXTENSION=".zig"
 LANG=".go"
 EXTRACTORS=`ls $EXTRACT_PATTERNS_DIR/*.toml`
 PYTHON_EXTRACTOR=$ROOT/extract.py
@@ -90,7 +90,7 @@ for s in `ls ${SOURCES}/*${EXTENSION}`; do
         cp $c $FRAGMENTS_FOR_FILE/match
         SOURCE_NAME=$(basename $s)
         FRAGMENT_NAME=$(basename $c)
-        $COMBY -matcher $LANG -f $s -templates $FRAGMENTS_FOR_FILE -stdout > $TEMPLATES/${SOURCE_NAME%.*}.${FRAGMENT_NAME%.*}.template${EXTENSION}
+        $COMBY -sequential -matcher $LANG -f $s -templates $FRAGMENTS_FOR_FILE -stdout > $TEMPLATES/${SOURCE_NAME%.*}.${FRAGMENT_NAME%.*}.template${EXTENSION}
     done
 
     cp $s $TEMPLATES/$SOURCE_NAME.delete.me.123  # temporarily include the source file as a template for deduping processing all files

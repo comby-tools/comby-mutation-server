@@ -6,7 +6,7 @@ const TOML = require("@iarna/toml");
 
 const { match, rewrite, substitute } = require("./js/comby.js");
 
-var DEBUG = false;
+var DEBUG = true;
 
 /** Generation parameters */
 var TEMPLATES_DIR = "./templates";
@@ -14,7 +14,7 @@ var FRAGMENTS_DIR = "./fragments";
 var TEMPLATES = [];
 var FRAGMENTS = [];
 var GENERATE_PROBABILITY = 0.5;
-var TRANSFORM_GENERATED_PROBABILITY = 0.0;
+var TRANSFORM_GENERATED_PROBABILITY = 0.2;
 
 /** Transformation parameters */
 var MAX_TRANSFORMATION_RETRIES = 16;
@@ -91,6 +91,10 @@ function transformSource(source) {
 
   for (i = 0; i < MAX_TRANSFORMATION_RETRIES; i++) {
     var mutation = RULES[Math.floor(Math.random() * RULES.length)];
+    if (DEBUG) {
+      console.log("picked mutation: ", mutation);
+    }
+
     try {
       var unparsed = match(source, mutation.match, ".go", "where true");
     } catch (err) {
@@ -102,10 +106,12 @@ function transformSource(source) {
     }
     matches = JSON.parse(unparsed);
     if (matches.length > 0) {
+      if (DEBUG) {
+        console.log("success mutation: ", mutation);
+      }
       break;
     }
     if (DEBUG) {
-      console.log("picked mutation: ", mutation);
       console.log("retrying transformation");
     }
   }
@@ -140,6 +146,9 @@ function mutate(source) {
       console.log("generating... ");
     }
     var source = generateSource();
+    if (DEBUG) {
+      console.log("generated: ", source);
+    }
     if (Math.random() < TRANSFORM_GENERATED_PROBABILITY) {
       if (DEBUG) {
         console.log("and transforming...");
@@ -215,7 +224,7 @@ app.post("/rewrite_debug", bodyParser.json, function(req, res) {
   res.send(result);
 });
 
-var server = app.listen(4448, function() {
+var server = app.listen(4450, function() {
   var host = server.address().address;
   var port = server.address().port;
 
