@@ -12,7 +12,9 @@ var DEBUG = false;
 var TEMPLATES_DIR = "./templates";
 var FRAGMENTS_DIR = "./fragments";
 var TEMPLATES = [];
+var TEMPLATES_IN_MEMORY = [];
 var FRAGMENTS = [];
+var FRAGMENTS_IN_MEMORY = [];
 var GENERATE_PROBABILITY = 0.5;
 var TRANSFORM_GENERATED_PROBABILITY = 0.2;
 
@@ -60,8 +62,7 @@ function generateEnvironment() {
   var environment = [];
   var i;
   for (i = 1; i < holes + 1; i++) {
-    var fragmentName = FRAGMENTS[Math.floor(Math.random() * FRAGMENTS.length)];
-    var fragment = fs.readFileSync(`${FRAGMENTS_DIR}/${fragmentName}`, "utf8");
+    var fragment = FRAGMENTS_IN_MEMORY[Math.floor(Math.random() * FRAGMENTS_IN_MEMORY.length)];
     environment.push({ variable: i.toString(), value: fragment });
   }
   return environment;
@@ -69,8 +70,7 @@ function generateEnvironment() {
 
 // randomly select a template, generate an environment, and substitute
 function generateSource() {
-  var templateName = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
-  var template = fs.readFileSync(`${TEMPLATES_DIR}/${templateName}`, "utf8");
+  var template = TEMPLATES_IN_MEMORY[Math.floor(Math.random() * TEMPLATES_IN_MEMORY.length)];
   var environment = generateEnvironment();
   if (DEBUG) {
     console.log("template: ", template);
@@ -229,7 +229,13 @@ var server = app.listen(4450, function() {
   var port = server.address().port;
 
   TEMPLATES = fs.readdirSync(TEMPLATES_DIR);
+  TEMPLATES.forEach(file => 
+    { TEMPLATES_IN_MEMORY.push(fs.readFileSync(`${TEMPLATES_DIR}/${file}`, "utf8")) }
+  )
   FRAGMENTS = fs.readdirSync(FRAGMENTS_DIR);
+  FRAGMENTS.forEach(file => 
+    { FRAGMENTS_IN_MEMORY.push(fs.readFileSync(`${FRAGMENTS_DIR}/${file}`, "utf8")) }
+  )
 
   loadRules();
 
