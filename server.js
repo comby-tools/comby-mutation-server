@@ -1,7 +1,8 @@
-var express = require("express");
-var bodyParser = require("body-parser");
-var fs = require("fs");
-var app = express();
+const express = require("express");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const app = express();
+const minimist = require('minimist');
 const TOML = require("@iarna/toml");
 
 const { match, rewrite, substitute } = require("./js/comby.js");
@@ -23,6 +24,14 @@ var MAX_TRANSFORMATION_RETRIES = 16;
 var RULES_DIR = "./rules";
 var RULES = [];
 
+/** Load fragments and templates in memory */
+var LOAD_IN_MEMORY = false;
+var TEMPLATES_IN_MEMORY = [];
+var FRAGMENTS_IN_MEMORY = [];
+
+app.use(bodyParser.text());
+app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
+
 function loadRules() {
   try {
     var ruleFiles = fs.readdirSync(RULES_DIR);
@@ -39,8 +48,14 @@ function loadRules() {
   }
 }
 
-app.use(bodyParser.text());
-app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
+function createDirs() {
+  if (!fs.existsSync(TEMPLATES_DIR)) {
+    fs.mkdirSync(TEMPLATES_DIR);
+  }
+  if (!fs.existsSync(FRAGMENTS_DIR)) {
+    fs.mkdirSync(FRAGMENTS_DIR);
+  }
+}
 
 function replaceRange(source, { start, end }, replacement_text) {
   var before = source.slice(0, start.offset);
@@ -60,8 +75,14 @@ function generateEnvironment() {
   var environment = [];
   var i;
   for (i = 1; i < holes + 1; i++) {
-    var fragmentName = FRAGMENTS[Math.floor(Math.random() * FRAGMENTS.length)];
-    var fragment = fs.readFileSync(`${FRAGMENTS_DIR}/${fragmentName}`, "utf8");
+    let fragment;
+    if (LOAD_IN_MEMORY) {
+      fragment = FRAGMENTS_IN_MEMORY[Math.floor(Math.random() * FRAGMENTS_IN_MEMORY.length)];
+    } else {
+      var fragmentName = FRAGMENTS[Math.floor(Math.random() * FRAGMENTS.length)];
+      fragment = fs.readFileSync(`${FRAGMENTS_DIR}/${fragmentName}`, "utf8");
+    }
+
     environment.push({ variable: i.toString(), value: fragment });
   }
   return environment;
@@ -69,8 +90,14 @@ function generateEnvironment() {
 
 // randomly select a template, generate an environment, and substitute
 function generateSource() {
-  var templateName = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
-  var template = fs.readFileSync(`${TEMPLATES_DIR}/${templateName}`, "utf8");
+  let template
+  if (LOAD_IN_MEMORY) {
+    template = TEMPLATES_IN_MEMORY[Math.floor(Math.random() * TEMPLATES_IN_MEMORY.length)];
+  } else {
+    var templateName = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
+    template = fs.readFileSync(`${TEMPLATES_DIR}/${templateName}`, "utf8");
+  }
+
   var environment = generateEnvironment();
   if (DEBUG) {
     console.log("template: ", template);
@@ -224,12 +251,52 @@ app.post("/rewrite_debug", bodyParser.json, function(req, res) {
   res.send(result);
 });
 
-var server = app.listen(4450, function() {
+let args = minimist(process.argv.slice(2), {
+    default: {
+        port: 4448,
+        debug: DEBUG,
+        generate: GENERATE_PROBABILITY,
+        transform: TRANSFORM_GENERATED_PROBABILITY,
+        templates: TEMPLATES_DIR,
+        fragments: FRAGMENTS_DIR,
+        memory: LOAD_IN_MEMORY,
+        retries: MAX_TRANSFORMATION_RETRIES,
+    },
+});
+
+var server = app.listen(args.port, function() {
+  if (process.argv[2] == '--help' || process.argv[2] == '-h' || process.argv[2] == '-help') {
+    console.log('Arg defaults: ', args)
+  }
+
+  DEBUG = args.debug;
+  GENERATE_PROBABILITY = args.generate;
+  TRANSFORM_GENERATED_PROBABILITY = args.transform
+  TEMPLATES_DIR = args.templates;
+  FRAGMENTS_DIR = args.fragments;
+  LOAD_IN_MEMORY = args.memory;
+  MAX_TRANSFORMATION_RETRIES = args.retries;
+
+  if (DEBUG) {
+    console.log('[*] Args: ', args)
+  }
+
   var host = server.address().address;
   var port = server.address().port;
 
+  createDirs();
+
   TEMPLATES = fs.readdirSync(TEMPLATES_DIR);
   FRAGMENTS = fs.readdirSync(FRAGMENTS_DIR);
+
+  if (LOAD_IN_MEMORY) {
+    TEMPLATES.forEach(file =>
+      { TEMPLATES_IN_MEMORY.push(fs.readFileSync(`${TEMPLATES_DIR}/${file}`, "utf8")) }
+    )
+    FRAGMENTS.forEach(file =>
+      { FRAGMENTS_IN_MEMORY.push(fs.readFileSync(`${FRAGMENTS_DIR}/${file}`, "utf8")) }
+    )
+  }
 
   loadRules();
 

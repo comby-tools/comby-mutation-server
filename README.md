@@ -1,7 +1,7 @@
 # README
 
 ```
-npm install express body-parser @iarna/toml
+npm install express body-parser @iarna/toml minimist
 ```
 ## Server example
 
