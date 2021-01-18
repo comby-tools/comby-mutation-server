@@ -1,5 +1,16 @@
 #!/bin/bash
 
+if [ -z "$1" ]; then
+  echo "Give file extension to extract like .go or .sol"
+  exit 1
+fi
+
+if [ -z "$2" ]; then
+  echo "Give file language parser like .go"
+  exit 1
+fi
+
+
 ROOT=$(pwd)
 COMBY=comby
 
@@ -16,8 +27,8 @@ FRAGMENTS_FOR_FILE=$ROOT/fragments_for_file
 # patterns for extraction
 EXTRACT_PATTERNS_DIR=$ROOT/extract_patterns
 
-EXTENSION=".zig"
-LANG=".go"
+EXTENSION="$1"
+LANG="$2"
 EXTRACTORS=`ls $EXTRACT_PATTERNS_DIR/*.toml`
 PYTHON_EXTRACTOR=$ROOT/extract.py
 
