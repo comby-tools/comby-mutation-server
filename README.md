@@ -1,5 +1,7 @@
 # README
 
+## Install
+
 ```
 npm install express body-parser @iarna/toml minimist
 ```
@@ -7,54 +9,35 @@ npm install express body-parser @iarna/toml minimist
 
 ### Add transformation rules
 
-Put [comby config files](https://comby.dev/docs/configuration#toml-format) in `rules`. See examples there.
+Put [comby config files](https://comby.dev/docs/configuration#toml-format) in `rules`. See examples there, which are used by default.
 
 ### Running the server
 
 Start the server:
 
-```
-export NODE_OPTIONS="--max-old-space-size=8192"
-node server.js
+```bash
+$ export NODE_OPTIONS="--max-old-space-size=8192"
+$ node server.js
+[+] Loaded 109 transformation rules
+[+] Mutation server listening at http://:::4448
 ```
 
 **Parameters and defaults**
 
-```javascript
-var MAX_TRANSFORMATION_RETRIES = 16; // Number of times to retry picking a transformation if one in rules does not apply.
+Flags that matter:
 
-var GENERATE_PROBABILITY = 0.5; // Chance to introduce a new generated seed, see seed generation below. Set to 0 for pure transformation, no generation.
-var TRANSFORM_GENERATED_PROBABILITY = 0.0; // Chance to apply one of the transformations in rules to a newly generated seed.
-```
+- `--port 5555` manually specify to listne on port `5555`. The default is `4448`.
+- `--retries N` repicks a random mutation in the `rules` directory if the current one doesn't apply, up to `N` times.
+- `--debug` prints out various debug info: source received, transformations picked and applied, etc.
+
+Other supported flags can be listed with `node server.js --help`.
 
 **Testing and debugging**
 
-In a separate terminal:
+Start the server: `node server.js --debug`. Then, a separate terminal:
 
 ```bash
-curl -d '{1} {2} {3} [a] [b] (*) (&) (%, $)' -H "Content-Type: text/plain" -X POST http://localhost:4448/mutate_debug
+curl -d '{1} {2} {3} [a] [b] (*) (&) (%, $)' -H "Content-Type: text/plain" -X POST http://localhost:4448/mutate
 ```
 
-Do this a couple of times until a rule can fire. See server output for debug messages.
-
-## Priming seed generation
-
-**Input**
-
-- `extract_patterns` defines patterns for structural deconstruction
-- `sources` defines starting sources
-
-**Output**
-
-- `fragments` - concrete fragments extracted by `extract_patterns`
-- `templates` - templatized sources determined by `fragments`
-
-**Example**
-
-```
-mkdir sources
-echo "(1 (2) ((3)))" > source/example.sol
-./extract.sh
-```
-
-To nest deconstruction, run `./extract.sh nest`.
+Where `'...'` is taken as the source. Do this a couple of times until a rule can fire. See server output for debug messages.

@@ -14,8 +14,8 @@ var TEMPLATES_DIR = "./templates";
 var FRAGMENTS_DIR = "./fragments";
 var TEMPLATES = [];
 var FRAGMENTS = [];
-var GENERATE_PROBABILITY = 0.5;
-var TRANSFORM_GENERATED_PROBABILITY = 0.2;
+var GENERATE_PROBABILITY = 0.0;
+var TRANSFORM_GENERATED_PROBABILITY = 0.0;
 
 /** Transformation parameters */
 var MAX_TRANSFORMATION_RETRIES = 16;
@@ -267,6 +267,7 @@ let args = minimist(process.argv.slice(2), {
 var server = app.listen(args.port, function() {
   if (process.argv[2] == '--help' || process.argv[2] == '-h' || process.argv[2] == '-help') {
     console.log('Arg defaults: ', args)
+    process.exit(1)
   }
 
   DEBUG = args.debug;
